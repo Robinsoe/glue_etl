@@ -1,11 +1,15 @@
-# source_etl_delete
+# source_etl
 
 import etl_setup
-import etl_functions
+from etl_functions import ETLFunctions
 import os
 import pandas as pd
 
 if __name__ == '__main__':
+
+    etl_functions = ETLFunctions()
+    etl_functions.tag = 'data_engineering'
+    # etl_functions.tag = 'data_science'
 
     # Query Utility Table
     username = os.getlogin()
@@ -19,7 +23,7 @@ if __name__ == '__main__':
                         , databasename, schemaname, tablename, migrationtype, groupno
                     FROM utility.data_sources_v
                 ) t
-                LIMIT 30
+                LIMIT 5
                 """
     conn_string = ("Driver={PostgreSQL Unicode};Server=bda-aurora-postgresql-cluster.cluster-ro-c2it5k2mwyhf.us-west-2.rds.amazonaws.com;Database=bda-aurora;UID=svc_prod_ops;PWD=svc_prod_ops; Trusted_Connection=yes")
     df = etl_functions.getSQLData(sql_string, conn_string, plk_data_dir, data_file, updateLocal=ansr)
@@ -36,23 +40,32 @@ if __name__ == '__main__':
     # df = pd.DataFrame(data)
     # s3_bucket_name = 'crcdal-glue'
 
+    # create s3 bucket
+    s3_bucket_list = etl_functions.s3_bucket_list()
+    if s3_bucket_name not in s3_bucket_list:
+        etl_functions.create_s3_bucket(s3_bucket_name)
+        print('S3 bucket created')
+
+    # upload glue job scripts to s3 bucket
+    script_path = f'./'
+    etl_functions.upload_glue_scripts_to_s3_bucket(s3_bucket_name, script_path)
+    print('Upload scripts to s3')
+
     # Connection List
     con_list = etl_setup.get_con_list()
 
-    # Delete Everything
-    print('Deleting workflows')
+    # Loop through utility table
     for index, row in df.iterrows():
         svr = row['servername']
         db = row['databasename']
         sch = row['schemaname']
         tbl = row['tablename']
-        glue_db_name = f'{svr.lower()}_{db.lower()}'
-        workflow_name = f'{svr.lower()}_{db.lower()}_{sch.lower()}_{tbl.lower()}_wf'
-        jdbc_crawler_name = f'{svr.lower()}_{db.lower()}_{sch.lower()}_{tbl.lower()}_crawler_jdbc'
-        s3_crawler_name = f'{svr.lower()}_{db.lower()}_{sch.lower()}_{tbl.lower()}_crawler_s3'
-        db_adj = db.replace("-", "_")
-        table_name = f'{db_adj.lower()}_{sch.lower()}_{tbl.lower()}'
-        s3_table_name = f'{tbl.lower()}'
-        job_name = f'{svr.lower()}_{db.lower()}_{sch.lower()}_{tbl.lower()}_job'
-        trigger_name = f'{svr.lower()}_{db.lower()}_{sch.lower()}_{tbl.lower()}_trigger'
-        etl_functions.delete_wf_all(glue_db_name, table_name, s3_table_name, jdbc_crawler_name, s3_crawler_name, job_name, trigger_name, workflow_name)
+        type = row['migrationtype']
+        group = row['groupno']
+        print(f'ETL: {db.lower()}_{sch.lower()}_{tbl.lower()}')
+
+        etl_functions.create_source_to_glue_cat_etl(svr, db, sch, tbl, type, group, con_list, s3_bucket_name)
+        # etl_functions.delete_source_to_glue_cat_etl(svr, db, sch, tbl)
+
+
+
