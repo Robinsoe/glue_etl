@@ -464,14 +464,21 @@ class ETLFunctions(object):
     # start workflows function
     def start_wf(self, workflow):
         response = None
-        while True:
-            try:
-                response = glue.start_workflow_run(Name=workflow)
-                break
-            except:
-                print('Workflow Delay 60 sec')
-                time.sleep(60)
-                print('Delay Over')
+        wf = glue.get_workflow(Name=workflow)
+        last_run= wf['Workflow'].get('LastRun')
+        if last_run:
+            status = last_run.get('Status')
+            if status in ('RUNNING','STOPPING'):
+                response = None
+        else:
+            while True:
+                try:
+                    response = glue.start_workflow_run(Name=workflow)
+                    break
+                except:
+                    print('Workflow Delay 60 sec')
+                    time.sleep(60)
+                    print('Delay Over')
         return response
 
     # delete workflows function
