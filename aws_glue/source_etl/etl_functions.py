@@ -540,7 +540,7 @@ class ETLFunctions(object):
             pass
 
     # delete workflows function
-    def create_source_to_glue_cat_etl(self, svr, db, sch, tbl, type, group, partition_by=None, bookmark='N'):
+    def create_source_to_glue_cat_etl(self, svr, db, sch, tbl, type, group, partition_by=None, bookmark='N', start_wf=False):
 
         source_name = f'{svr.lower()}_{db.lower()}_{sch.lower()}_{tbl.lower()}'
         if partition_by:
@@ -594,5 +594,6 @@ class ETLFunctions(object):
             self.create_glue_trigger(trig['name'], trig['workflow'], trig['type'], trig['actions'], trig['kargs'])
 
         # Start workflows
-        print('Starting workflows')
-        self.start_wf(workflow_name)
+        if start_wf == True:
+            print('Starting workflows')
+            self.start_wf(workflow_name)

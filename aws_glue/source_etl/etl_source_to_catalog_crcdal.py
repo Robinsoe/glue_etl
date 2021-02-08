@@ -63,7 +63,8 @@ if __name__ == '__main__':
             type = row['migrationtype'],
             group = row['groupno'],
             partition_by = row['apivar'],
-            bookmark = row['bookmark']
+            bookmark = row['bookmark'],
+            start_wf = False
         )
         # etl_functions.delete_source_to_glue_cat_etl(
         #     svr = row['servername'],
