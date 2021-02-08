@@ -484,6 +484,15 @@ class ETLFunctions(object):
     # delete workflows function
     def delete_source_to_glue_cat_etl(self, svr, db, sch, tbl, partition_by=None):
 
+        #clear s3
+        prefix = f'{svr.lower()}/{db.lower()}/{sch.lower()}/{tbl.lower()}'
+        bucket = s3resource.Bucket(self.s3_bucket_name)
+        objs = bucket.objects.filter(Prefix=prefix)
+        for obj in objs:
+            print(obj.key)
+            obj.delete()
+
+        # set names
         source_name = f'{svr.lower()}_{db.lower()}_{sch.lower()}_{tbl.lower()}'
         if partition_by:
             target_name = f'{svr.lower()}_{db.lower()}_{sch.lower()}_{tbl.lower()}_{partition_by.lower()}'
