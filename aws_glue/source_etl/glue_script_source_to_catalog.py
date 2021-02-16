@@ -9,7 +9,7 @@ from awsglue.job import Job
 import boto3
 
 # Glue/Spark context set up
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'glue_db', 's3_bucket', 'svr', 'db', 'sch', 'tbl', 'partition_by', 'bookmark'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'glue_db', 'table_name', 's3_path', 'partition_by', 'bookmark'])
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
@@ -18,17 +18,10 @@ logger = glueContext.get_logger()
 
 # Table reference data
 glue_db = args['glue_db']
-s3_bucket = args['s3_bucket']
-svr = args['svr']
-db = args['db']
-sch = args['sch']
-tbl = args['tbl']
+table_name = args['table_name']
+s3_path = args['s3_path']
 partition_by = args['partition_by']
 bookmark = args['bookmark']
-db_adj = db.replace("-", "_")
-table_name = db_adj + '_'+ sch +'_' + tbl
-s3_path ='s3://' + s3_bucket + '/' + svr + '/' + db + '/' + sch + '/' + tbl
-prefix = svr + '/' + db + '/' + sch + '/' + tbl
 
 # Get glue catalog table data for mapping
 glue = boto3.client('glue', region_name='us-west-2')
@@ -44,13 +37,13 @@ if bookmark == 'N':
     glueContext.purge_s3_path(s3_path)
 
 # Set connection options
-if partition_by:
-    connection_options = {"path": s3_path, "partitionKeys": [partition_by]}
-else:
+if partition_by == 'None':
     connection_options = {"path": s3_path}
+else:
+    connection_options = {"path": s3_path, "partitionKeys": [partition_by]}
 
 # Run glue job
-ctx = tbl
+ctx = table_name
 job.init(args['JOB_NAME'], args)
 datasource0 = glueContext.create_dynamic_frame.from_catalog(database=glue_db, table_name=table_name, transformation_ctx="datasource0" + ctx)
 applymapping1 = ApplyMapping.apply(frame=datasource0, mappings=mapping, transformation_ctx="applymapping1" + ctx)

@@ -159,11 +159,11 @@ def get_con_list():
     for key in endpoints():
         epnt = endpoints()[key]
         if epnt['engine_name'] == 'oracle':
-            con = [f'jdbc:oracle:thin://@{epnt["server_name"]}:{epnt["port"]}/{key}', epnt["uid"], epnt["pwd"]]
+            con = [f'jdbc:oracle:thin://@{epnt["server_name"]}:{epnt["port"]}/{key}', epnt["uid"], epnt["pwd"], epnt["engine_name"]]
         elif epnt['engine_name'] == 'sqlserver':
-            con = [f'jdbc:sqlserver://{epnt["server_name"]}\\{key}:{epnt["port"]};database=;', epnt["uid"], epnt["pwd"]]
+            con = [f'jdbc:sqlserver://{epnt["server_name"]}\\{key}:{epnt["port"]};database=;', epnt["uid"], epnt["pwd"], epnt["engine_name"]]
         elif epnt['engine_name'] == 'postgres':
-            con = [f'jdbc:postgresql://{epnt["server_name"]}:{epnt["port"]}/{epnt["database"]}', epnt["uid"], epnt["pwd"]]
+            con = [f'jdbc:postgresql://{epnt["server_name"]}:{epnt["port"]}/{epnt["database"]}', epnt["uid"], epnt["pwd"], epnt["engine_name"]]
         else:
             con = ['']
         con_list[key.lower()] = con
